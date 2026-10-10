@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../core/network/api_exception.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text.dart';
 import '../../core/utils/enums.dart';
+import '../../core/utils/format.dart';
+import '../../core/widgets/app_buttons.dart';
 import '../../core/widgets/async_value_widget.dart';
+import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/sub_page.dart';
 import '../../models/availability.dart';
 import '../../providers/availability_provider.dart';
 import '../../providers/core_providers.dart';
@@ -14,47 +19,63 @@ class AvailabilityScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Availability'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddSlotSheet(context, ref),
-            tooltip: 'Add availability',
-          ),
-        ],
+    final slotsAsync = ref.watch(myAvailabilityProvider);
+
+    return SubPage(
+      title: 'My availability',
+      subtitle: 'People see these slots when they request a swap.',
+      onRefresh: () async => ref.invalidate(myAvailabilityProvider),
+      bottomBar: PrimaryButton(
+        label: 'Add slot',
+        icon: Icons.add_rounded,
+        onPressed: () => _showAddSlotSheet(context, ref),
       ),
-      body: ref.watch(myAvailabilityProvider).when(
-        data: (slots) {
-          if (slots.isEmpty) {
-            return Center(
-              child: Text(
-                'No availability set yet',
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-              ),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: WeekDay.values.length,
-            itemBuilder: (context, dayIndex) {
-              final day = WeekDay.values[dayIndex];
-              final daySlots = slots.where((s) => s.dayOfWeek == day).toList();
-              return _DaySection(
-                day: day,
-                slots: daySlots,
-                onDelete: (id) => _deleteSlot(context, ref, id),
+      children: [
+        AsyncValueWidget<List<Availability>>(
+          value: slotsAsync,
+          onRetry: () => ref.invalidate(myAvailabilityProvider),
+          loadingBuilder: (_) => const SizedBox(
+            height: 160,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2.6)),
+          ),
+          data: (slots) {
+            if (slots.isEmpty) {
+              return const SizedBox(
+                height: 280,
+                child: EmptyState(
+                  icon: Icons.schedule_rounded,
+                  message: 'No availability set yet.\nAdd a slot so partners know when you’re free.',
+                ),
               );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Text('Error loading availability: $error'),
+            }
+            return Column(
+              children: [
+                for (final day in WeekDay.values)
+                  ..._daySection(context, ref, day, slots.where((s) => s.dayOfWeek == day).toList()),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _daySection(BuildContext context, WidgetRef ref, WeekDay day, List<Availability> slots) {
+    if (slots.isEmpty) return const [];
+    return [
+      Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 6, bottom: 8),
+          child: Text(day.label, style: AppText.cardHeading()),
         ),
       ),
-    );
+      for (final slot in slots) ...[
+        _SlotRow(slot: slot, onDelete: () => _deleteSlot(context, ref, slot.id)),
+        const SizedBox(height: 8),
+      ],
+      const SizedBox(height: 8),
+    ];
   }
 
   Future<void> _deleteSlot(BuildContext context, WidgetRef ref, int id) async {
@@ -68,37 +89,38 @@ class AvailabilityScreen extends ConsumerWidget {
       }
     } on ApiException catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
       }
     }
   }
 
   Future<void> _showAddSlotSheet(BuildContext context, WidgetRef ref) async {
-    await showModalBottomSheet(
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => _AddSlotSheet(
+      useSafeArea: true,
+      backgroundColor: AppColors.paper,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (sheetContext) => _AddSlotSheet(
         onAdd: (dayOfWeek, startTime, endTime) async {
           try {
             await ref.read(availabilityRepositoryProvider).addAvailability(
-              dayOfWeek: dayOfWeek,
-              startTime: startTime,
-              endTime: endTime,
-            );
+                  dayOfWeek: dayOfWeek,
+                  startTime: startTime,
+                  endTime: endTime,
+                );
             ref.invalidate(myAvailabilityProvider);
-            if (context.mounted) {
-              Navigator.pop(context);
+            if (sheetContext.mounted) {
+              Navigator.pop(sheetContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Availability added')),
               );
             }
           } on ApiException catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(e.message)),
-              );
+            if (sheetContext.mounted) {
+              ScaffoldMessenger.of(sheetContext).showSnackBar(SnackBar(content: Text(e.message)));
             }
           }
         },
@@ -107,137 +129,73 @@ class AvailabilityScreen extends ConsumerWidget {
   }
 }
 
-class _DaySection extends StatelessWidget {
-  const _DaySection({
-    required this.day,
-    required this.slots,
-    required this.onDelete,
-  });
-
-  final WeekDay day;
-  final List<Availability> slots;
-  final Function(int) onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    if (slots.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            day.label,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-        ...slots.map((slot) => _SlotCard(slot: slot, onDelete: onDelete)),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-}
-
-class _SlotCard extends StatelessWidget {
-  const _SlotCard({required this.slot, required this.onDelete});
+class _SlotRow extends StatelessWidget {
+  const _SlotRow({required this.slot, required this.onDelete});
 
   final Availability slot;
-  final Function(int) onDelete;
-
-  TimeOfDay _parseTime(String timeStr) {
-    final parts = timeStr.split(':');
-    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
-  }
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final startTime = _parseTime(slot.startTime);
-    final endTime = _parseTime(slot.endTime);
-    final startStr = startTime.format(context);
-    final endStr = endTime.format(context);
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
-        ),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.cardBorder),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        title: Text(
-          '$startStr – $endStr',
-          style: theme.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w600,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '${trimTime(slot.startTime)} – ${trimTime(slot.endTime)}',
+              style: AppText.body(15, weight: FontWeight.w700, color: AppColors.ink),
+            ),
           ),
-        ),
-        trailing: IconButton(
-          icon: Icon(
-            Icons.delete_outline,
-            size: 20,
-            color: theme.colorScheme.error,
+          IconButton(
+            tooltip: 'Remove slot',
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            onPressed: onDelete,
+            icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textSecondary),
           ),
-          onPressed: () => onDelete(slot.id),
-          splashRadius: 24,
-        ),
+        ],
       ),
     );
   }
 }
 
-class _AddSlotSheet extends ConsumerStatefulWidget {
+class _AddSlotSheet extends StatefulWidget {
   const _AddSlotSheet({required this.onAdd});
 
   final Future<void> Function(WeekDay, TimeOfDay, TimeOfDay) onAdd;
 
   @override
-  ConsumerState<_AddSlotSheet> createState() => _AddSlotSheetState();
+  State<_AddSlotSheet> createState() => _AddSlotSheetState();
 }
 
-class _AddSlotSheetState extends ConsumerState<_AddSlotSheet> {
-  WeekDay _selectedDay = WeekDay.monday;
-  TimeOfDay? _startTime;
-  TimeOfDay? _endTime;
+class _AddSlotSheetState extends State<_AddSlotSheet> {
+  WeekDay _day = WeekDay.monday;
+  TimeOfDay _start = const TimeOfDay(hour: 18, minute: 0);
+  TimeOfDay _end = const TimeOfDay(hour: 20, minute: 0);
   bool _submitting = false;
 
-  Future<void> _pickStartTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _startTime ?? const TimeOfDay(hour: 9, minute: 0),
-    );
-    if (picked != null) setState(() => _startTime = picked);
+  Future<void> _pick(bool start) async {
+    final picked = await showTimePicker(context: context, initialTime: start ? _start : _end);
+    if (picked != null) setState(() => start ? _start = picked : _end = picked);
   }
 
-  Future<void> _pickEndTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _endTime ?? const TimeOfDay(hour: 17, minute: 0),
-    );
-    if (picked != null) setState(() => _endTime = picked);
-  }
-
-  void _submit() async {
-    if (_startTime == null || _endTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select both start and end times')),
-      );
-      return;
-    }
-
-    if (_startTime!.hour > _endTime!.hour ||
-        (_startTime!.hour == _endTime!.hour && _startTime!.minute >= _endTime!.minute)) {
+  Future<void> _submit() async {
+    final startM = _start.hour * 60 + _start.minute;
+    final endM = _end.hour * 60 + _end.minute;
+    if (startM >= endM) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Start time must be before end time')),
       );
       return;
     }
-
     setState(() => _submitting = true);
     try {
-      await widget.onAdd(_selectedDay, _startTime!, _endTime!);
+      await widget.onAdd(_day, _start, _end);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -246,96 +204,108 @@ class _AddSlotSheetState extends ConsumerState<_AddSlotSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 16,
-        right: 16,
-        top: 16,
-      ),
+      padding: EdgeInsets.fromLTRB(20, 14, 20, 24 + MediaQuery.of(context).viewInsets.bottom),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Add Availability',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Day of Week',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
-            SegmentedButton<WeekDay>(
-              segments: WeekDay.values
-                  .map((day) => ButtonSegment(label: Text(day.label[0]), value: day))
-                  .toList(),
-              selected: {_selectedDay},
-              onSelectionChanged: (Set<WeekDay> newSelection) {
-                setState(() => _selectedDay = newSelection.first);
-              },
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Start Time',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton(
-                        onPressed: _pickStartTime,
-                        child: Text(
-                          _startTime?.format(context) ?? 'Select time',
-                        ),
-                      ),
-                    ],
-                  ),
+            Center(
+              child: Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD6D3CB),
+                  borderRadius: BorderRadius.circular(3),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'End Time',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton(
-                        onPressed: _pickEndTime,
-                        child: Text(
-                          _endTime?.format(context) ?? 'Select time',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _submitting ? null : _submit,
-                child: _submitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Add Availability'),
               ),
             ),
             const SizedBox(height: 16),
+            Text('Add a slot', style: AppText.sheetTitle()),
+            const SizedBox(height: 18),
+            Text('DAY', style: AppText.overline()),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                for (var i = 0; i < WeekDay.values.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 6),
+                  Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => setState(() => _day = WeekDay.values[i]),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        height: 48,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: _day == WeekDay.values[i] ? AppColors.ink : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: _day == WeekDay.values[i]
+                              ? null
+                              : Border.all(color: AppColors.inputBorder, width: 1.5),
+                        ),
+                        child: Text(
+                          WeekDay.values[i].label.substring(0, 2),
+                          style: AppText.body(
+                            13,
+                            weight: FontWeight.w700,
+                            color: _day == WeekDay.values[i] ? AppColors.accent : AppColors.ink,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(child: _TimeField(label: 'START', time: _start, onTap: () => _pick(true))),
+                const SizedBox(width: 10),
+                Expanded(child: _TimeField(label: 'END', time: _end, onTap: () => _pick(false))),
+              ],
+            ),
+            const SizedBox(height: 22),
+            PrimaryButton(label: 'Add availability', loading: _submitting, onPressed: _submit),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _TimeField extends StatelessWidget {
+  const _TimeField({required this.label, required this.time, required this.onTap});
+
+  final String label;
+  final TimeOfDay time;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppText.overline()),
+        const SizedBox(height: 6),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.fieldBg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.inputBorder, width: 1.5),
+            ),
+            child: Text(
+              time.format(context),
+              style: AppText.body(15, weight: FontWeight.w600, color: AppColors.ink),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/network/api_exception.dart';
 import '../../core/utils/enums.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text.dart';
+import '../../core/widgets/app_buttons.dart';
+import '../../core/widgets/app_field.dart';
 import '../../core/widgets/async_value_widget.dart';
 import '../../core/widgets/auth_error_banner.dart';
-import '../../core/widgets/section_label.dart';
+import '../../core/widgets/pills.dart';
+import '../../core/widgets/segmented_tabs.dart';
+import '../../core/widgets/sub_page.dart';
+import '../../core/widgets/toggle_switch.dart';
 import '../../models/skill.dart';
 import '../../providers/core_providers.dart';
 import '../../providers/profile_provider.dart';
@@ -82,10 +88,10 @@ class _AddSkillScreenState extends ConsumerState<AddSkillScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Skill added!')));
-        context.pop();
+        popOrGo(context, '/profile');
       }
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -95,131 +101,156 @@ class _AddSkillScreenState extends ConsumerState<AddSkillScreen> {
   Widget build(BuildContext context) {
     final skillsAsync = ref.watch(skillsByCategoryProvider(_filterCategory));
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Add a skill')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          if (_error != null) ...[
-            AuthErrorBanner(_error!),
-            const SizedBox(height: 16),
-          ],
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Create a new skill'),
-            subtitle: const Text("Turn on if it's not in the list below"),
-            value: _creatingNew,
-            onChanged: (value) => setState(() => _creatingNew = value),
+    return SubPage(
+      title: 'Add a skill',
+      bottomBar: PrimaryButton(
+        label: 'Add skill',
+        icon: Icons.add_rounded,
+        loading: _submitting,
+        onPressed: _submit,
+      ),
+      children: [
+        if (_error != null) ...[
+          AuthErrorBanner(_error!),
+          const SizedBox(height: 16),
+        ],
+        Text('I WANT TO…', style: AppText.overline()),
+        const SizedBox(height: 8),
+        SegmentedTabs(
+          labels: const ['Teach it', 'Learn it'],
+          selected: _type == SkillType.teach ? 0 : 1,
+          onChanged: (i) => setState(
+            () => _type = i == 0 ? SkillType.teach : SkillType.learn,
           ),
-          const SizedBox(height: 8),
-          if (_creatingNew) ...[
-            TextField(
-              controller: _newSkillNameController,
-              decoration: const InputDecoration(labelText: 'Skill name'),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<SkillCategory>(
-              initialValue: _newSkillCategory,
-              decoration: const InputDecoration(labelText: 'Category'),
-              items: SkillCategory.values
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c.label)))
-                  .toList(),
-              onChanged: (value) => setState(
-                () => _newSkillCategory = value ?? SkillCategory.other,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _newSkillDescController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Description (optional)',
-              ),
-            ),
-          ] else ...[
-            DropdownButtonFormField<SkillCategory?>(
-              initialValue: _filterCategory,
-              decoration: const InputDecoration(
-                labelText: 'Filter by category',
-              ),
-              items: [
-                const DropdownMenuItem(
-                  value: null,
-                  child: Text('All categories'),
-                ),
-                ...SkillCategory.values.map(
-                  (c) => DropdownMenuItem(value: c, child: Text(c.label)),
-                ),
-              ],
-              onChanged: (value) => setState(() {
-                _filterCategory = value;
-                _selectedSkillId = null;
-              }),
-            ),
-            const SizedBox(height: 16),
-            AsyncValueWidget<List<Skill>>(
-              value: skillsAsync,
-              onRetry: () =>
-                  ref.invalidate(skillsByCategoryProvider(_filterCategory)),
-              data: (skills) => DropdownButtonFormField<int>(
-                initialValue: _selectedSkillId,
-                decoration: const InputDecoration(labelText: 'Skill'),
-                items: skills
-                    .map(
-                      (s) => DropdownMenuItem(value: s.id, child: Text(s.name)),
-                    )
-                    .toList(),
-                onChanged: (value) => setState(() => _selectedSkillId = value),
-              ),
-            ),
-          ],
-          const SizedBox(height: 20),
-          const SectionLabel('I want to...'),
-          const SizedBox(height: 8),
-          SegmentedButton<SkillType>(
-            segments: const [
-              ButtonSegment(
-                value: SkillType.teach,
-                label: Text('Teach it'),
-                icon: Icon(Icons.school_outlined),
-              ),
-              ButtonSegment(
-                value: SkillType.learn,
-                label: Text('Learn it'),
-                icon: Icon(Icons.menu_book_outlined),
-              ),
-            ],
-            selected: {_type},
-            onSelectionChanged: (selection) =>
-                setState(() => _type = selection.first),
-          ),
-          const SizedBox(height: 20),
-          const SectionLabel('My level'),
-          const SizedBox(height: 8),
-          SegmentedButton<SkillLevel>(
-            segments: SkillLevel.values
-                .map((l) => ButtonSegment(value: l, label: Text(l.label)))
-                .toList(),
-            selected: {_level},
-            onSelectionChanged: (selection) =>
-                setState(() => _level = selection.first),
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _submitting ? null : _submit,
-            child: _submitting
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Theme.of(context).colorScheme.onPrimary,
+        ),
+        const SizedBox(height: 20),
+        Text('MY LEVEL', style: AppText.overline()),
+        const SizedBox(height: 8),
+        SegmentedTabs(
+          labels: [for (final l in SkillLevel.values) l.label],
+          selected: SkillLevel.values.indexOf(_level),
+          small: true,
+          onChanged: (i) => setState(() => _level = SkillLevel.values[i]),
+        ),
+        const SizedBox(height: 20),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => setState(() => _creatingNew = !_creatingNew),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Create a new skill',
+                      style: AppText.body(15, weight: FontWeight.w600, color: AppColors.ink),
                     ),
-                  )
-                : const Text('Add skill'),
+                    Text(
+                      "Turn on if it's not in the list",
+                      style: AppText.body(13, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              ToggleSwitch(value: _creatingNew),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        if (_creatingNew) ...[
+          LabeledField(
+            label: 'Skill name',
+            controller: _newSkillNameController,
+            fill: Colors.white,
+          ),
+          const SizedBox(height: 16),
+          Text('CATEGORY', style: AppText.overline()),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final c in SkillCategory.values)
+                FilterChipPill(
+                  label: c.label,
+                  selected: _newSkillCategory == c,
+                  onTap: () => setState(() => _newSkillCategory = c),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          LabeledField(
+            label: 'Description (optional)',
+            controller: _newSkillDescController,
+            maxLines: 2,
+            fill: Colors.white,
+          ),
+        ] else ...[
+          Text('CATEGORY', style: AppText.overline()),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 40,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              children: [
+                FilterChipPill(
+                  label: 'All',
+                  selected: _filterCategory == null,
+                  onTap: () => setState(() {
+                    _filterCategory = null;
+                    _selectedSkillId = null;
+                  }),
+                ),
+                for (final c in SkillCategory.values)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: FilterChipPill(
+                      label: c.label,
+                      selected: _filterCategory == c,
+                      onTap: () => setState(() {
+                        _filterCategory = c;
+                        _selectedSkillId = null;
+                      }),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text('SKILL', style: AppText.overline()),
+          const SizedBox(height: 8),
+          AsyncValueWidget<List<Skill>>(
+            value: skillsAsync,
+            onRetry: () => ref.invalidate(skillsByCategoryProvider(_filterCategory)),
+            loadingBuilder: (_) => const SizedBox(
+              height: 80,
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
+            ),
+            data: (skills) {
+              if (skills.isEmpty) {
+                return Text(
+                  'No skills in this category yet — create a new one above.',
+                  style: AppText.body(14, color: AppColors.textSecondary),
+                );
+              }
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final s in skills)
+                    FilterChipPill(
+                      label: s.name,
+                      selected: _selectedSkillId == s.id,
+                      onTap: () => setState(() => _selectedSkillId = s.id),
+                    ),
+                ],
+              );
+            },
           ),
         ],
-      ),
+      ],
     );
   }
 }

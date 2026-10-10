@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+import '../theme/app_text.dart';
+
 class AuthErrorBanner extends StatelessWidget {
   const AuthErrorBanner(this.message, {super.key});
 
@@ -7,21 +10,24 @@ class AuthErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: scheme.errorContainer,
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.statusDeclinedBg,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline_rounded, size: 18, color: scheme.onErrorContainer),
+          const Icon(Icons.error_outline_rounded, size: 18, color: AppColors.statusDeclinedText),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onErrorContainer),
+              style: AppText.body(
+                13.5,
+                weight: FontWeight.w600,
+                color: AppColors.statusDeclinedText,
+              ),
             ),
           ),
         ],

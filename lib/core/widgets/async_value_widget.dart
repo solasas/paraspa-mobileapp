@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../network/api_exception.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text.dart';
+import 'app_buttons.dart';
+import 'sub_page.dart';
 
 /// Renders a Riverpod AsyncValue with consistent loading/error/data states
 /// and a pull-to-refresh-friendly retry action.
@@ -12,6 +16,7 @@ class AsyncValueWidget<T> extends StatelessWidget {
     required this.data,
     this.onRetry,
     this.loadingBuilder,
+    this.showBack = false,
   });
 
   final AsyncValue<T> value;
@@ -19,14 +24,45 @@ class AsyncValueWidget<T> extends StatelessWidget {
   final VoidCallback? onRetry;
   final WidgetBuilder? loadingBuilder;
 
+  /// Overlay a back button on the loading/error states (full-screen detail
+  /// pages, where there is no app bar to leave from).
+  final bool showBack;
+
+  Widget _withBack(BuildContext context, Widget child) {
+    if (!showBack) return child;
+    return Stack(
+      children: [
+        Positioned.fill(child: child),
+        Positioned(
+          left: 20,
+          top: MediaQuery.of(context).padding.top + 8,
+          child: const BackSquareButton(),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return value.when(
       data: data,
-      loading: () =>
-          loadingBuilder?.call(context) ??
-          const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => _ErrorView(error: error, onRetry: onRetry),
+      loading: () => _withBack(
+        context,
+        loadingBuilder?.call(context) ??
+            const Center(
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 2.6, color: AppColors.ink),
+              ),
+            ),
+      ),
+      error: (error, stack) {
+        if (error is! ApiException) {
+          debugPrint('AsyncValueWidget<$T> error: $error\n$stack');
+        }
+        return _withBack(context, _ErrorView(error: error, onRetry: onRetry));
+      },
     );
   }
 }
@@ -41,7 +77,6 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     final err = error;
     final message = err is ApiException ? err.message : 'Something went wrong.';
-    final scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -51,14 +86,20 @@ class _ErrorView extends StatelessWidget {
             Container(
               width: 64,
               height: 64,
-              decoration: BoxDecoration(color: scheme.errorContainer, shape: BoxShape.circle),
-              child: Icon(Icons.priority_high_rounded, size: 30, color: scheme.error),
+              decoration: BoxDecoration(
+                color: AppColors.statusDeclinedBg,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Icon(Icons.priority_high_rounded, size: 30, color: AppColors.danger),
             ),
             const SizedBox(height: 14),
-            Text(message, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium),
+            Text(message, textAlign: TextAlign.center, style: AppText.bodyText()),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+              SizedBox(
+                width: 160,
+                child: SecondaryButton(label: 'Retry', onPressed: onRetry),
+              ),
             ],
           ],
         ),

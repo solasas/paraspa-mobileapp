@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/network/api_exception.dart';
+import '../../core/widgets/app_buttons.dart';
+import '../../core/widgets/app_field.dart';
 import '../../core/widgets/auth_error_banner.dart';
+import '../../core/widgets/sub_page.dart';
 import '../../providers/core_providers.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
@@ -29,29 +31,26 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   }
 
   Future<void> _submit() async {
-    // Client-side validation
-    if (_currentPasswordController.text.trim().isEmpty) {
-      setState(() => _error = 'Current password is required.');
-      return;
+    final current = _currentPasswordController.text.trim();
+    final next = _newPasswordController.text;
+    final confirm = _confirmPasswordController.text;
+
+    String? problem;
+    if (current.isEmpty) {
+      problem = 'Current password is required.';
+    } else if (next.trim().isEmpty) {
+      problem = 'New password is required.';
+    } else if (confirm.trim().isEmpty) {
+      problem = 'Confirm password is required.';
+    } else if (next.length < 6) {
+      problem = 'New password must be at least 6 characters.';
+    } else if (next != confirm) {
+      problem = 'New passwords do not match.';
+    } else if (next.trim() == current) {
+      problem = 'New password must be different from the current password.';
     }
-    if (_newPasswordController.text.trim().isEmpty) {
-      setState(() => _error = 'New password is required.');
-      return;
-    }
-    if (_confirmPasswordController.text.trim().isEmpty) {
-      setState(() => _error = 'Confirm password is required.');
-      return;
-    }
-    if (_newPasswordController.text.length < 6) {
-      setState(() => _error = 'New password must be at least 6 characters.');
-      return;
-    }
-    if (_newPasswordController.text != _confirmPasswordController.text) {
-      setState(() => _error = 'New passwords do not match.');
-      return;
-    }
-    if (_newPasswordController.text.trim() == _currentPasswordController.text.trim()) {
-      setState(() => _error = 'New password must be different from the current password.');
+    if (problem != null) {
+      setState(() => _error = problem);
       return;
     }
 
@@ -59,12 +58,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       _submitting = true;
       _error = null;
     });
-
     try {
       await ref.read(profileRepositoryProvider).changePassword(
-        currentPassword: _currentPasswordController.text.trim(),
-        newPassword: _newPasswordController.text.trim(),
-      );
+            currentPassword: current,
+            newPassword: next.trim(),
+          );
       if (mounted) {
         _currentPasswordController.clear();
         _newPasswordController.clear();
@@ -72,10 +70,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Password changed.')),
         );
-        context.pop();
+        popOrGo(context, '/profile');
       }
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -83,51 +81,43 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Change password')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          if (_error != null) ...[
-            AuthErrorBanner(_error!),
-            const SizedBox(height: 16),
-          ],
-          TextField(
-            controller: _currentPasswordController,
-            decoration: const InputDecoration(labelText: 'Current password'),
-            obscureText: true,
-            enabled: !_submitting,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _newPasswordController,
-            decoration: const InputDecoration(labelText: 'New password'),
-            obscureText: true,
-            enabled: !_submitting,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _confirmPasswordController,
-            decoration: const InputDecoration(labelText: 'Confirm new password'),
-            obscureText: true,
-            enabled: !_submitting,
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _submitting ? null : _submit,
-            child: _submitting
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
-                  )
-                : const Text('Change password'),
-          ),
-        ],
+    return SubPage(
+      title: 'Change password',
+      bottomBar: PrimaryButton(
+        label: 'Change password',
+        loading: _submitting,
+        onPressed: _submit,
       ),
+      children: [
+        if (_error != null) ...[
+          AuthErrorBanner(_error!),
+          const SizedBox(height: 16),
+        ],
+        LabeledField(
+          label: 'Current password',
+          controller: _currentPasswordController,
+          obscure: true,
+          enabled: !_submitting,
+          fill: Colors.white,
+        ),
+        const SizedBox(height: 16),
+        LabeledField(
+          label: 'New password',
+          controller: _newPasswordController,
+          obscure: true,
+          enabled: !_submitting,
+          fill: Colors.white,
+          trailingLabel: 'At least 6 characters',
+        ),
+        const SizedBox(height: 16),
+        LabeledField(
+          label: 'Confirm new password',
+          controller: _confirmPasswordController,
+          obscure: true,
+          enabled: !_submitting,
+          fill: Colors.white,
+        ),
+      ],
     );
   }
 }

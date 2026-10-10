@@ -2,7 +2,7 @@ name: skillswap
 description: "SkillSwap - a community skill-exchange platform."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.2+2
 
 environment:
   sdk: ^3.12.1
@@ -33,6 +33,7 @@ dependencies:
   # Utilities
   intl: ^0.19.0
   equatable: ^2.0.7
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:
@@ -50,21 +51,21 @@ flutter:
   # typography works offline and isn't subject to platform sandbox/network
   # restrictions blocking a first-launch font download.
   fonts:
-    - family: Sora
+    - family: Bricolage
       fonts:
-        - asset: assets/fonts/Sora-Variable.ttf
-          weight: 400
-        - asset: assets/fonts/Sora-Variable.ttf
-          weight: 600
-        - asset: assets/fonts/Sora-Variable.ttf
-          weight: 700
-        - asset: assets/fonts/Sora-Variable.ttf
-          weight: 800
-    - family: Manrope
-      fonts:
-        - asset: assets/fonts/Manrope-Variable.ttf
+        - asset: assets/fonts/BricolageGrotesque-Variable.ttf
           weight: 500
-        - asset: assets/fonts/Manrope-Variable.ttf
+        - asset: assets/fonts/BricolageGrotesque-Variable.ttf
+          weight: 700
+        - asset: assets/fonts/BricolageGrotesque-Variable.ttf
+          weight: 800
+    - family: DMSans
+      fonts:
+        - asset: assets/fonts/DMSans-Variable.ttf
+          weight: 400
+        - asset: assets/fonts/DMSans-Variable.ttf
+          weight: 500
+        - asset: assets/fonts/DMSans-Variable.ttf
           weight: 600
-        - asset: assets/fonts/Manrope-Variable.ttf
+        - asset: assets/fonts/DMSans-Variable.ttf
           weight: 700

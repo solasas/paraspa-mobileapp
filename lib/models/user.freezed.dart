@@ -22,8 +22,9 @@ User _$UserFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$User {
   int get id => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
-  String get email => throw _privateConstructorUsedError;
+  String get name =>
+      throw _privateConstructorUsedError; // Omitted by the backend on match/search results for privacy.
+  String? get email => throw _privateConstructorUsedError;
   String? get bio => throw _privateConstructorUsedError;
   String? get city => throw _privateConstructorUsedError;
   String? get role => throw _privateConstructorUsedError;
@@ -49,7 +50,7 @@ abstract class $UserCopyWith<$Res> {
   $Res call({
     int id,
     String name,
-    String email,
+    String? email,
     String? bio,
     String? city,
     String? role,
@@ -77,7 +78,7 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
   $Res call({
     Object? id = null,
     Object? name = null,
-    Object? email = null,
+    Object? email = freezed,
     Object? bio = freezed,
     Object? city = freezed,
     Object? role = freezed,
@@ -96,10 +97,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
                 ? _value.name
                 : name // ignore: cast_nullable_to_non_nullable
                       as String,
-            email: null == email
+            email: freezed == email
                 ? _value.email
                 : email // ignore: cast_nullable_to_non_nullable
-                      as String,
+                      as String?,
             bio: freezed == bio
                 ? _value.bio
                 : bio // ignore: cast_nullable_to_non_nullable
@@ -145,7 +146,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
   $Res call({
     int id,
     String name,
-    String email,
+    String? email,
     String? bio,
     String? city,
     String? role,
@@ -170,7 +171,7 @@ class __$$UserImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? name = null,
-    Object? email = null,
+    Object? email = freezed,
     Object? bio = freezed,
     Object? city = freezed,
     Object? role = freezed,
@@ -189,10 +190,10 @@ class __$$UserImplCopyWithImpl<$Res>
             ? _value.name
             : name // ignore: cast_nullable_to_non_nullable
                   as String,
-        email: null == email
+        email: freezed == email
             ? _value.email
             : email // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
         bio: freezed == bio
             ? _value.bio
             : bio // ignore: cast_nullable_to_non_nullable
@@ -232,7 +233,7 @@ class _$UserImpl implements _User {
   const _$UserImpl({
     required this.id,
     required this.name,
-    required this.email,
+    this.email,
     this.bio,
     this.city,
     this.role,
@@ -249,8 +250,9 @@ class _$UserImpl implements _User {
   final int id;
   @override
   final String name;
+  // Omitted by the backend on match/search results for privacy.
   @override
-  final String email;
+  final String? email;
   @override
   final String? bio;
   @override
@@ -326,7 +328,7 @@ abstract class _User implements User {
   const factory _User({
     required final int id,
     required final String name,
-    required final String email,
+    final String? email,
     final String? bio,
     final String? city,
     final String? role,
@@ -341,9 +343,9 @@ abstract class _User implements User {
   @override
   int get id;
   @override
-  String get name;
+  String get name; // Omitted by the backend on match/search results for privacy.
   @override
-  String get email;
+  String? get email;
   @override
   String? get bio;
   @override

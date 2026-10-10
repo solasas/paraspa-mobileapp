@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/network/api_exception.dart';
@@ -85,6 +86,13 @@ class AuthController extends StateNotifier<AuthState> {
     } on ApiException catch (e) {
       state = state.copyWith(status: AuthStatus.unauthenticated, errorMessage: e.message);
       return false;
+    } catch (e, st) {
+      debugPrint('Auth error: $e\n$st');
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        errorMessage: 'Could not complete sign in. Please try again.',
+      );
+      return false;
     }
   }
 
@@ -112,6 +120,13 @@ class AuthController extends StateNotifier<AuthState> {
       return true;
     } on ApiException catch (e) {
       state = state.copyWith(status: AuthStatus.unauthenticated, errorMessage: e.message);
+      return false;
+    } catch (e, st) {
+      debugPrint('Auth error: $e\n$st');
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        errorMessage: 'Could not complete sign in. Please try again.',
+      );
       return false;
     }
   }

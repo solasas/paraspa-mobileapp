@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/app_version_label.dart';
 import '../../core/widgets/brand_mark.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -7,24 +9,20 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const BrandMark(size: 72),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.4,
-                color: scheme.primary,
-              ),
+    return const Scaffold(
+      backgroundColor: AppColors.ink,
+      body: Stack(
+        children: [
+          Center(child: BrandMark(size: 72, background: AppColors.ink)),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 36,
+            child: SafeArea(
+              child: AppVersionLabel(color: AppColors.onDarkTertiary),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

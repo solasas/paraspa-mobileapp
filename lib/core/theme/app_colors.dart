@@ -1,46 +1,75 @@
 import 'package:flutter/material.dart';
 
-/// Hand-picked palette (not a Material `ColorScheme.fromSeed` tonal ramp) so
-/// the app doesn't read as the same indigo/purple every generated Flutter
-/// UI ships with. Warm, editorial, community-project tones instead of
-/// corporate SaaS blue.
+/// Design tokens for the SkillSwap mobile UI. Single light theme: warm paper
+/// background, near-black "ink" for dark surfaces and primary actions, and a
+/// lime `accent` used sparingly for active states and highlights.
 class AppColors {
   AppColors._();
 
-  // Light
-  static const lightBackground = Color(0xFFFAF6EE);
-  static const lightSurface = Color(0xFFFFFFFF);
-  static const lightSurfaceAlt = Color(0xFFF3EDE0);
-  static const lightPrimary = Color(0xFF2B6455);
-  static const lightPrimaryContainer = Color(0xFFDCEEE6);
-  static const lightOnPrimaryContainer = Color(0xFF0E3327);
-  static const lightAccent = Color(0xFFCC8A2C);
-  static const lightAccentContainer = Color(0xFFF6E6C9);
-  static const lightDanger = Color(0xFFB8453D);
-  static const lightDangerContainer = Color(0xFFF6DEDB);
-  static const lightOutline = Color(0xFFE1D9C7);
-  static const lightOnSurface = Color(0xFF1F241F);
-  static const lightOnSurfaceMuted = Color(0xFF6D6656);
+  // Surfaces
+  static const ink = Color(0xFF15151A);
+  static const inkRaised = Color(0xFF24242C);
+  static const inkBorder = Color(0xFF3A3A46);
+  static const inkDecorLine = Color(0xFF2C2C36);
+  static const paper = Color(0xFFF4F2ED);
+  static const surface = Color(0xFFFFFFFF);
+  static const fieldBg = Color(0xFFF8F7F3);
+  static const trackBg = Color(0xFFE9E6DF);
+  static const sunken = Color(0xFFF0EEE8);
 
-  // Dark
-  static const darkBackground = Color(0xFF14181A);
-  static const darkSurface = Color(0xFF1B2120);
-  static const darkSurfaceAlt = Color(0xFF232A28);
-  static const darkPrimary = Color(0xFF7FC4AA);
-  static const darkPrimaryContainer = Color(0xFF204439);
-  static const darkOnPrimaryContainer = Color(0xFFCBEBDD);
-  static const darkAccent = Color(0xFFE7AD52);
-  static const darkAccentContainer = Color(0xFF473313);
-  static const darkDanger = Color(0xFFE0857D);
-  static const darkDangerContainer = Color(0xFF4A2321);
-  static const darkOutline = Color(0xFF34403A);
-  static const darkOnSurface = Color(0xFFEAEEE8);
-  static const darkOnSurfaceMuted = Color(0xFF9CA79E);
+  // Borders
+  static const cardBorder = Color(0xFFECE9E2);
+  static const inputBorder = Color(0xFFE2DFD8);
+  static const chipBorder = Color(0xFFDCD9D1);
+  static const dashedBorder = Color(0xFFB9B6AE);
+  static const barBorder = Color(0xFFE4E1DA);
 
-  // Semantic (identical in both modes; used for status pills)
-  static const pending = Color(0xFFCC8A2C);
-  static const accepted = Color(0xFF2B6455);
-  static const rejected = Color(0xFFB8453D);
-  static const completed = Color(0xFF3D6BA6);
-  static const star = Color(0xFFDB9B2C);
+  // Text
+  static const textPrimary = Color(0xFF15151A);
+  static const textSecondary = Color(0xFF5F5E66);
+  static const textBody = Color(0xFF3B3A42);
+  static const onDarkPrimary = Color(0xFFF4F2ED);
+  static const onDarkSecondary = Color(0xFFB9B8C2);
+  static const onDarkTertiary = Color(0xFFA9A8B3);
+
+  // Brand / pastel fills
+  static const accent = Color(0xFFD6F45B);
+  static const lilac = Color(0xFFCBBEFF);
+  static const peach = Color(0xFFFFC9A8);
+  static const mint = Color(0xFF9EE6C8);
+  static const sky = Color(0xFFB8E0FF);
+  static const butter = Color(0xFFFFE3A3);
+  static const violetStrong = Color(0xFF7B61FF);
+
+  /// Avatar fills rotate through these.
+  static const avatarFills = [lilac, peach, mint, sky, butter];
+
+  // Skill tags
+  static const teachTintBg = Color(0xFFEEF8C9);
+  static const teachTintText = Color(0xFF4B5A12);
+  static const learnTintBg = Color(0xFFECE7FF);
+  static const learnTintText = Color(0xFF4A3F86);
+
+  // Status pills
+  static const statusPendingBg = Color(0xFFFFE7A3);
+  static const statusPendingText = Color(0xFF5A4300);
+  static const statusAcceptedBg = Color(0xFFD6F45B);
+  static const statusAcceptedText = Color(0xFF15151A);
+  static const statusDeclinedBg = Color(0xFFFFD9D3);
+  static const statusDeclinedText = Color(0xFF7A2416);
+  static const statusDoneBg = Color(0xFF15151A);
+  static const statusDoneText = Color(0xFFF4F2ED);
+
+  // Signals
+  static const notify = Color(0xFFFF6B4A);
+  static const online = Color(0xFF2BB673);
+  static const onlineText = Color(0xFF1E7A4C);
+  static const starOnLight = Color(0xFFF2A900);
+  static const starOnDark = Color(0xFFFFC94D);
+  static const danger = Color(0xFFA3311C);
+  static const teachDot = Color(0xFF8DB400);
+
+  // Misc fixed values from the spec
+  static const busyCell = Color(0xFFECE9E2);
+  static const busyCellText = Color(0xFF66656E);
 }

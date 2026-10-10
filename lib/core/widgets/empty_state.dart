@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+import '../theme/app_text.dart';
+
 class EmptyState extends StatelessWidget {
   const EmptyState({
     super.key,
@@ -14,7 +17,6 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -25,18 +27,16 @@ class EmptyState extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: scheme.primaryContainer.withValues(alpha: 0.6),
-                shape: BoxShape.circle,
+                color: AppColors.lilac,
+                borderRadius: BorderRadius.circular(26),
               ),
-              child: Icon(icon, size: 32, color: scheme.onPrimaryContainer),
+              child: Icon(icon, size: 32, color: AppColors.ink),
             ),
             const SizedBox(height: 18),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
+              style: AppText.body(15, height: 1.45, color: AppColors.textSecondary),
             ),
             if (action != null) ...[const SizedBox(height: 16), action!],
           ],

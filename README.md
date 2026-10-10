@@ -18,9 +18,16 @@ complementary users, request a swap, schedule sessions, rate each other).
   (`lib/core/storage/secure_storage_service.dart`). There is no refresh-token
   endpoint, so token expiry (default 24h) is handled purely by the 401 hook
   routing back to `/login`.
-- **Routing**: `go_router` with a `StatefulShellRoute` for the four bottom-nav
-  tabs (Matches, Requests, Sessions, Profile) and a redirect based on
-  `authProvider`'s state (`lib/core/router/app_router.dart`).
+- **Routing**: `go_router` with a `StatefulShellRoute` for the five floating
+  bottom-nav tabs (Discover, Search, Swaps, Chats, Me) and a redirect based on
+  `authProvider`'s state (`lib/core/router/app_router.dart`). Unauthenticated
+  users land on `/welcome`; detail screens (match, request, exchange, session,
+  chat, rate) are pushed on the root navigator so they show a back button
+  instead of the nav.
+- **Design system**: tokens in `lib/core/theme` (`AppColors`, `AppText`,
+  `AppTheme`) and shared widgets in `lib/core/widgets` follow the mobile UI
+  spec — Bricolage Grotesque for display, DM Sans for UI (both bundled in
+  `assets/fonts`), warm paper background with ink + lime accent.
 
 ## Note on `/matches` response shape
 
