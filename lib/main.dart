@@ -5,17 +5,17 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
 void main() {
-  runApp(const ProviderScope(child: SkillSwapApp()));
+  runApp(const ProviderScope(child: ParaspaApp()));
 }
 
-class SkillSwapApp extends ConsumerWidget {
-  const SkillSwapApp({super.key});
+class ParaspaApp extends ConsumerWidget {
+  const ParaspaApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
-      title: 'skillswap',
+      title: 'paraspa',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       themeMode: ThemeMode.light,

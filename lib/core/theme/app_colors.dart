@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Design tokens for the SkillSwap mobile UI. Single light theme: warm paper
+/// Design tokens for the paraspa mobile UI. Single light theme: warm paper
 /// background, near-black "ink" for dark surfaces and primary actions, and a
 /// lime `accent` used sparingly for active states and highlights.
 class AppColors {

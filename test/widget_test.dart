@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:skillswap/core/utils/format.dart';
-import 'package:skillswap/core/widgets/brand_mark.dart';
-import 'package:skillswap/core/widgets/segmented_tabs.dart';
-import 'package:skillswap/core/widgets/swap_avatar.dart';
-import 'package:skillswap/main.dart';
+import 'package:paraspa/core/utils/format.dart';
+import 'package:paraspa/core/widgets/brand_mark.dart';
+import 'package:paraspa/core/widgets/segmented_tabs.dart';
+import 'package:paraspa/core/widgets/swap_avatar.dart';
+import 'package:paraspa/main.dart';
 
 void main() {
   testWidgets('App boots to the splash screen', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: SkillSwapApp()));
+    await tester.pumpWidget(const ProviderScope(child: ParaspaApp()));
     await tester.pump();
 
     expect(find.byType(BrandMark), findsOneWidget);

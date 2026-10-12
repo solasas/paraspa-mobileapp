@@ -241,7 +241,7 @@ String _ratingMeta(MatchResult m) {
 
 String _heroMeta(MatchResult m) {
   final total = m.user.totalRatings ?? 0;
-  if (total == 0) return 'New to skillswap';
+  if (total == 0) return 'New to paraspa';
   return '${(m.user.averageRating ?? 0).toStringAsFixed(1)} · $total ${total == 1 ? 'review' : 'reviews'}';
 }
 

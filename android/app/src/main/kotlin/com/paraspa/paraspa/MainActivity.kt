@@ -1,4 +1,4 @@
-package com.skillswap.skillswap
+package com.paraspa.paraspa
 
 import io.flutter.embedding.android.FlutterActivity
 

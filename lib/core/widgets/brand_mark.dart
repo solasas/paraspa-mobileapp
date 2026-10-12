@@ -71,7 +71,7 @@ class _OverlapPainter extends CustomPainter {
   bool shouldRepaint(_OverlapPainter old) => old.cutout != cutout;
 }
 
-/// Mark + "skillswap" wordmark.
+/// Mark + "paraspa" wordmark.
 class Wordmark extends StatelessWidget {
   const Wordmark({
     super.key,
@@ -92,7 +92,7 @@ class Wordmark extends StatelessWidget {
         BrandMark(size: size * 1.25, background: background),
         const SizedBox(width: 8),
         Text(
-          'skillswap',
+          'paraspa',
           style: AppText.display(size, spacing: -size * 0.025, color: color),
         ),
       ],
